@@ -191,7 +191,7 @@ def heart_bb(vp, frame):
                 Rgb(frame.z1, frame.z1, frame.z1))
     elif (vp != None):
         draw_solid_polygon(vp, map(transform_posn(frame), p), Posn(0,0), Rgb(frame.z1, frame.z1, frame.z1))
-    heart_circle = stack_frac(quarter_turn_right(stack_frac(k / (1 + k), blank_bb, circle_bb)), blank_bb, 2 / (1 + 3 * k))
+    heart_circle = stack_frac(p1=quarter_turn_right(stack_frac(frac=k / (1 + k), p1=blank_bb, p2=circle_bb)), p2=blank_bb, frac=2 / (1 + 3 * k))
     heart_circle(vp, frame)
     flip_horiz(heart_circle)(vp, frame)
 
@@ -320,7 +320,7 @@ def stack_frac(p1, p2, frac):
 
 # top, bottom
 def stack(p1, p2):
-    return stack_frac(p1, p2, 1/2)
+    return stack_frac(p1=p1, p2=p2, frac=1/2)
 
 def rotate(painter, rad):
     def function(vp, frame):
@@ -328,7 +328,7 @@ def rotate(painter, rad):
     return function
 
 def eighth_turn_left(painter):
-    return rotate(painter, pi/4)
+    return rotate(painter=painter, rad=pi/4)
 
 def quarter_turn_right(painter):
     def function(vp, frame):
@@ -358,7 +358,7 @@ def overlay_frac(p1, p2, frac):
     return function
 
 def overlay(p1, p2):
-    return overlay_frac(p1, p2, 1/2)
+    return overlay_frac(p1=p1, p2=p2, frac=1/2)
 
 def scale_independent(painter, ratio_x, ratio_y):
     def function(vp, frame):
@@ -366,7 +366,7 @@ def scale_independent(painter, ratio_x, ratio_y):
     return function
 
 def scale(painter, ratio):
-    return scale_independent(painter, ratio, ratio)
+    return scale_independent(painter=painter, ratio_x=ratio, ratio_y=ratio)
 
 def translate(painter, x, y):
     def function(vp, frame):
@@ -394,7 +394,7 @@ def repeat_pattern(pic, pat, n):
 def stackn(painter, n):
     result = painter
     for i in range(2, n+1):
-        result = stack_frac(painter, result, 1/i)
+        result = stack_frac(p1=painter, p2=result, frac=1/i)
     return result
 
 def hollusion(painter, ports=None):
@@ -706,23 +706,23 @@ def number(n, rune = circle_bb):
     except:
         pass
     if isinstance(n, (int, bool, float)):
-        arr = [stackn(int(i), rune) if int(i) else blank_bb for i in str(int(n))]
+        arr = [stackn(n=int(i), painter=rune) if int(i) else blank_bb for i in str(int(n))]
     elif isinstance(n, (list, tuple, str)):
         n = list(map(int, n))
         if any(map(lambda x: x >= 300, n)):
             raise(Exception("Got a large input number, try again :("))
-        arr = [stackn(int(i), rune) if int(i) else blank_bb for i in n]
+        arr = [stackn(n=int(i), painter=rune) if int(i) else blank_bb for i in n]
     else:
         raise(Exception("Bad input, I'm so sorry"))
     r = arr[-1]
     for i in range(2, len(arr) + 1):
-        r = quarter_turn_left(stack_frac(1/i, quarter_turn_right(arr[len(arr) - i]), quarter_turn_right(r)))
+        r = quarter_turn_left(stack_frac(frac=1/i, p1=quarter_turn_right(arr[len(arr) - i]), p2=quarter_turn_right(r)))
     return r
 
 # V2.3 by Clarence Chew
 def checkerboard(f = lambda x,y: [blank_bb, black_bb][(x+y) % 2], cols = 8, rows = 8):
     if rows > 1:
-        return stack_frac((rows//2)/rows, checkerboard(f, cols, rows//2), checkerboard(lambda x, y: f(x, y + rows//2), cols, rows - rows//2))
+        return stack_frac(frac=(rows//2)/rows, p1=checkerboard(f, cols, rows//2), p2=checkerboard(lambda x, y: f(x, y + rows//2), cols, rows - rows//2))
     elif cols > 1:
         return quarter_turn_left(checkerboard(lambda x, y: quarter_turn_right(f(y, x)), 1, cols))
     else:
@@ -732,16 +732,16 @@ def qr(bytes):
     size = int(sqrt(len(bytes)))
     return checkerboard(lambda x,y: [blank_bb, black_bb][int(bytes[size*y + x])], size, size)
 
-o = lambda x: x[0] if len(x) == 1 else overlay_frac(0, o(x[:len(x)//2]), o(x[len(x)//2:]))
-si = scale_independent
-t = translate
+o = lambda x: x[0] if len(x) == 1 else overlay_frac(frac=0, p1=o(x[:len(x)//2]), p2=o(x[len(x)//2:]))
+si = lambda rx, ry, p: scale_independent(ratio_x=rx, ratio_y=ry, painter=p)
+t = lambda x, y, p: translate(painter=p, x=x, y=y)
 cf = lambda r: o([r, si(-1, 1, r)])
 
-pawn_bb = o([scale(0.3,circle_bb), t(0, 1/4, scale(0.5, cf(sail_bb)))])
+pawn_bb = o([scale(ratio=0.3,painter=circle_bb), t(0, 1/4, scale(ratio=0.5, painter=cf(sail_bb)))])
 rook_bb = o([t(0, -0.1, si(0.5, 0.1, number(1010101, black_bb))), si(0.5, 0.1, black_bb), t(0, 1/4, si(0.4, 0.5, black_bb))])
-king_bb = o([t(-0.15, 0.2, scale(0.4, circle_bb)), t(0.15, 0.2, scale(0.4, circle_bb)), scale(0.25, make_cross(rcross_bb)), t(0, 0.3, scale(0.4, black_bb))])
+king_bb = o([t(-0.15, 0.2, scale(ratio=0.4, painter=circle_bb)), t(0.15, 0.2, scale(ratio=0.4, painter=circle_bb)), scale(ratio=0.25, painter=make_cross(rcross_bb)), t(0, 0.3, scale(ratio=0.4, painter=black_bb))])
 queen_bb = cf(o([t(-1/4, 0, si(1/3, 1/2, sail_bb)), t(-1/12, 0, si(1/3, 1/2, sail_bb)), t(1/12, 0, si(1/3, 1/2, sail_bb))]))
-bishop_bb = o([cf(o([t(-1/4, 0.1, si(0.1, -2/5, corner_bb)), t(-1/5, -0.1, si(1/5, -2/5, corner_bb)), t(-0.1, -1/4, si(1/5, -0.3, corner_bb))])), scale(1/5, black_bb), t(0, 1/5, si(2/5, 1/5, black_bb)), t(0, 2/5, si(1/2, 1/5, black_bb))])
+bishop_bb = o([cf(o([t(-1/4, 0.1, si(0.1, -2/5, corner_bb)), t(-1/5, -0.1, si(1/5, -2/5, corner_bb)), t(-0.1, -1/4, si(1/5, -0.3, corner_bb))])), scale(ratio=1/5, painter=black_bb), t(0, 1/5, si(2/5, 1/5, black_bb)), t(0, 2/5, si(1/2, 1/5, black_bb))])
 knight_bb = o([t(-5/32, 1/8, si(3/16, 3/4, black_bb)), t(-1/16, 1/3, si(3/8, 1/3, sail_bb)), t(0, -0.1, si(1/8, 0.3, black_bb)), t(1/16, -0.1, si(1/4, 0.3, sail_bb)), t(3/16, -1/40, si(1/8, -3/20, cf(sail_bb))), t(1/16, -21/160, si(3/8, 1/16, sail_bb)), t(-1/80, -30/160, si(3/8, 1/8, sail_bb))])
 
 # Avoid reusal
@@ -758,12 +758,12 @@ def chess(piece_str = "rnbqkbnrpppppppp" + " "*32 + "PPPPPPPPRNBQKBNR"):
     }
     return (
         lambda d,b: overlay_frac(
-            2/3, 
-            checkerboard(
+            frac=2/3,
+            p1=checkerboard(
                 lambda x,y: d[piece_str[y*8 + x].upper()] if piece_str[y*8+x].upper() in d and piece_str[y*8 + x].islower() else blank_bb, 8, 8
             ), 
-            overlay_frac(
-                1/2, checkerboard(lambda x,y: d[piece_str[y*8 + x]] if piece_str[y*8 + x] in d else blank_bb, 8, 8), b
+            p2=overlay_frac(
+                frac=1/2, p1=checkerboard(lambda x,y: d[piece_str[y*8 + x]] if piece_str[y*8 + x] in d else blank_bb, 8, 8), p2=b
             )
         )
     )(chess_dict, checkerboard())
