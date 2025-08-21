@@ -191,9 +191,7 @@ def heart_bb(vp, frame):
                 Rgb(frame.z1, frame.z1, frame.z1))
     elif (vp != None):
         draw_solid_polygon(vp, map(transform_posn(frame), p), Posn(0,0), Rgb(frame.z1, frame.z1, frame.z1))
-    heart_circle = stack_frac(2 / (1 + 3 * k), \
-        quarter_turn_right(stack_frac(k / (1+k), blank_bb, circle_bb)), \
-        blank_bb)
+    heart_circle = stack_frac(quarter_turn_right(stack_frac(k / (1 + k), blank_bb, circle_bb)), blank_bb, 2 / (1 + 3 * k))
     heart_circle(vp, frame)
     flip_horiz(heart_circle)(vp, frame)
 
@@ -312,7 +310,7 @@ def process_frame(op, frame):
 
 # Basic painter combinations
 # top, bottom
-def stack_frac(frac, p1, p2):
+def stack_frac(p1, p2, frac):
     def function(vp, frame):
         uf = process_frame("top_frac", frame)(frac)
         lf = process_frame("bottom_frac", frame)(1-frac)
@@ -322,15 +320,15 @@ def stack_frac(frac, p1, p2):
 
 # top, bottom
 def stack(p1, p2):
-    return stack_frac(1/2, p1, p2)
+    return stack_frac(p1, p2, 1/2)
 
-def rotate(rad, painter):
+def rotate(painter, rad):
     def function(vp, frame):
         painter(vp, process_frame("rotate", frame)(rad))
     return function
 
 def eighth_turn_left(painter):
-    return rotate(pi/4, painter)
+    return rotate(painter, pi/4)
 
 def quarter_turn_right(painter):
     def function(vp, frame):
@@ -348,7 +346,7 @@ def flip_horiz(painter):
         painter(vp, process_frame("flip_horiz", frame))
     return function
 
-def overlay_frac(frac, p1, p2):
+def overlay_frac(p1, p2, frac):
     def function(vp, frame):
         if(frac>1 or frac<0):
             raise ValueError("overlay_frac: 0 <= frac <= 1 is required")
@@ -360,17 +358,17 @@ def overlay_frac(frac, p1, p2):
     return function
 
 def overlay(p1, p2):
-    return overlay_frac(1/2, p1, p2)
+    return overlay_frac(p1, p2, 1/2)
 
-def scale_independent(ratio_x, ratio_y, painter):
+def scale_independent(painter, ratio_x, ratio_y):
     def function(vp, frame):
         painter(vp, process_frame("scale_independent", frame)(ratio_x, ratio_y))
     return function
 
-def scale(ratio, painter):
-    return scale_independent(ratio, ratio, painter)
+def scale(painter, ratio):
+    return scale_independent(painter, ratio, ratio)
 
-def translate(x,y, painter):
+def translate(painter, x, y):
     def function(vp, frame):
         painter(vp, process_frame("translate", frame)(x,y))
     return function
@@ -387,16 +385,16 @@ def beside(painter1, painter2):
 def make_cross(painter):
     return stack(beside(quarter_turn_right(painter), turn_upside_down(painter)), beside(painter,quarter_turn_left(painter)))
 
-def repeat_pattern(n, pat, pic):
+def repeat_pattern(pic, pat, n):
     result = pic
     for _ in range(n):
             result = pat(result)
     return result
 
-def stackn(n, painter):
+def stackn(painter, n):
     result = painter
     for i in range(2, n+1):
-        result = stack_frac(1/i, painter, result)
+        result = stack_frac(painter, result, 1/i)
     return result
 
 def hollusion(painter, ports=None):
@@ -652,37 +650,37 @@ def save_hollusion(filename):
 
 def cs1010s(rune):
     def axb(a,b, pic):
-        return stackn(b, quarter_turn_right(stackn(a, quarter_turn_left(pic))))
+        return stackn(n=b, painter=quarter_turn_right(stackn(n=a, painter=quarter_turn_left(pic))))
 
     def c(rune):
-        return stack_frac(1/5,axb(3,1,rune),stack_frac(3/4,stackn(3,quarter_turn_right(stack_frac(2/3,blank_bb,quarter_turn_left(rune)))),axb(3,1,rune)))
+        return stack_frac(frac=1/5,p1=axb(3,1,rune),p2=stack_frac(frac=3/4,p1=stackn(n=3,painter=quarter_turn_right(stack_frac(2/3,blank_bb,quarter_turn_left(rune)))),p2=axb(3,1,rune)))
 
     def s(rune):
-        return stack_frac(1/5,axb(3,1,rune),stack_frac(1/4,quarter_turn_right(stack_frac(2/3,blank_bb,quarter_turn_left(rune))),stack_frac(1/3,axb(3,1,rune),stack(quarter_turn_left(stack_frac(2/3,blank_bb,quarter_turn_right(rune))),axb(3,1,rune)))))
+        return stack_frac(frac=1/5,p1=axb(3,1,rune),p2=stack_frac(frac=1/4,p1=quarter_turn_right(stack_frac(frac=2/3,p1=blank_bb,p2=quarter_turn_left(rune))),p2=stack_frac(frac=1/3,p1=axb(3,1,rune),p2=stack(quarter_turn_left(stack_frac(frac=2/3,p1=blank_bb,p2=quarter_turn_right(rune))),p2=axb(3,1,rune)))))
 
     def one(rune):
-        return quarter_turn_left(stack_frac(1/3,blank_bb,quarter_turn_right(beside(stack_frac(1/5,rune,blank_bb),stackn(5,rune)))))
+        return quarter_turn_left(stack_frac(frac=1/3,p1=blank_bb,p2=quarter_turn_right(beside(stack_frac(frac=1/5,p1=rune,p2=blank_bb),stackn(n=5,painter=rune)))))
 
     def zero(rune):
-        return stack_frac(1/5,axb(3,1,rune),stack_frac(3/4,quarter_turn_left(stack_frac(1/3,quarter_turn_right(stackn(3,rune)),stack(blank_bb,quarter_turn_right(stackn(3,rune))))),axb(3,1,rune)))
+        return stack_frac(frac=1/5,p1=axb(3,1,rune),p2=stack_frac(frac=3/4,p1=quarter_turn_left(stack_frac(frac=1/3,p1=quarter_turn_right(stackn(n=3,painter=rune)),p2=stack(blank_bb,quarter_turn_right(stackn(n=3,painter=rune))))),p2=axb(3,1,rune)))
 
     def ten(rune): # length 7, width 5
-        return quarter_turn_left(stack_frac(3/7,quarter_turn_right(one(rune)),stack_frac(1/4,blank_bb,quarter_turn_right(zero(rune)))))
+        return quarter_turn_left(stack_frac(frac=3/7,p1=quarter_turn_right(one(rune)),p2=stack_frac(frac=1/4,p1=blank_bb,p2=quarter_turn_right(zero(rune)))))
 
     def tenten(rune):
         return quarter_turn_left(stack(quarter_turn_right(ten(rune)),quarter_turn_right(ten(rune))))
 
     def cs(rune): # length 7, width 5
-        return quarter_turn_left(stack_frac(3/7,quarter_turn_right(c(rune)),stack_frac(1/4,blank_bb,quarter_turn_right(s(rune)))))
+        return quarter_turn_left(stack_frac(frac=3/7,p1=quarter_turn_right(c(rune)),p2=stack_frac(frac=1/4,p1=blank_bb,p2=quarter_turn_right(s(rune)))))
 
-    return scale_independent(1,1/5,quarter_turn_left(stack_frac(6/25,quarter_turn_right(cs(rune)),stack_frac(7/9,quarter_turn_right(tenten(rune)),stack_frac(1/4,blank_bb,quarter_turn_right(s(rune)))))))
+    return scale_independent(ratio_x=1,ratio_y=1/5,painter=quarter_turn_left(stack_frac(frac=6/25,p1=quarter_turn_right(cs(rune)),p2=stack_frac(frac=7/9,p1=quarter_turn_right(tenten(rune)),p2=stack_frac(frac=1/4,p1=blank_bb,p2=quarter_turn_right(s(rune)))))))
 
 # V2.1
 import numpy as np
 import cv2 as cv
 
 def intensity_to_rune(intensity, rune):
-    return overlay_frac(intensity/255, blank_bb, rune)
+    return overlay_frac(frac=intensity/255, p1=blank_bb, p2=rune)
 
 def image_to_array(filename):
     return cv.imread(filename, cv.IMREAD_GRAYSCALE)
@@ -693,12 +691,12 @@ def array_to_runes(arr, rune):
             if i == 0:
                 col = intensity_to_rune(arr[i,j], rune)
             else:
-                col = stack_frac(i/(i+1), col, intensity_to_rune(arr[i,j], rune))
+                col = stack_frac(frac=i/(i+1), p1=col, p2=intensity_to_rune(arr[i,j], rune))
 
         if j == 0:
             result = col
         else:
-            result = quarter_turn_left(stack_frac(j/(j+1), quarter_turn_right(result), quarter_turn_right(col)))
+            result = quarter_turn_left(stack_frac(frac=j/(j+1), p1=quarter_turn_right(result), p2=quarter_turn_right(col)))
     return result
 
 # V2.2 by Clarence Chew
