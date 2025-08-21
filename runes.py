@@ -653,7 +653,7 @@ def cs1010s(rune):
         return stackn(n=b, painter=quarter_turn_right(stackn(n=a, painter=quarter_turn_left(pic))))
 
     def c(rune):
-        return stack_frac(frac=1/5,p1=axb(3,1,rune),p2=stack_frac(frac=3/4,p1=stackn(n=3,painter=quarter_turn_right(stack_frac(2/3,blank_bb,quarter_turn_left(rune)))),p2=axb(3,1,rune)))
+        return stack_frac(frac=1/5,p1=axb(3,1,rune),p2=stack_frac(frac=3/4,p1=stackn(n=3,painter=quarter_turn_right(stack_frac(frac=2/3,p1=blank_bb,p2=quarter_turn_left(rune)))),p2=axb(3,1,rune)))
 
     def s(rune):
         return stack_frac(frac=1/5,p1=axb(3,1,rune),p2=stack_frac(frac=1/4,p1=quarter_turn_right(stack_frac(frac=2/3,p1=blank_bb,p2=quarter_turn_left(rune))),p2=stack_frac(frac=1/3,p1=axb(3,1,rune),p2=stack(quarter_turn_left(stack_frac(frac=2/3,p1=blank_bb,p2=quarter_turn_right(rune))),p2=axb(3,1,rune)))))
